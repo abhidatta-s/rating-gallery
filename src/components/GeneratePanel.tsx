@@ -25,7 +25,7 @@ export default function GeneratePanel({ onImage }: Props) {
   };
 
   return (
-    <section className="gen" aria-labelledby="gen-title" data-testid="gen-panel">
+    <section className="gen" aria-busy={busy} aria-labelledby="gen-title" data-testid="gen-panel">
       <h2 id="gen-title" className="gen__title">Generate a card <span className="gen__tag">experimental · Hugging Face</span></h2>
       <p className="gen__hint">
         Sends your prompt to this site's server function, which calls Hugging Face with a server-side token.

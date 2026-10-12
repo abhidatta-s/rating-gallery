@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Entries, Filter, Sample, SortKey } from './types';
 import { SAMPLES } from './data/samples';
@@ -11,6 +12,7 @@ import GeneratePanel from './components/GeneratePanel';
 import { loadGenerated, saveGenerated } from './lib/generated';
 import ImportPanel from './components/ImportPanel';
 import { loadImported, saveImported } from './lib/imported';
+import DemoBar from './components/DemoBar';
 
 interface Toast {
   id: number;
@@ -106,11 +108,13 @@ export default function App() {
   };
 
   return (
+    <>
+    <DemoBar name="Rating Gallery" />
     <div className="app">
       <header className="header">
         <div className="header__title">
-          <span className="logo" aria-hidden="true" />
           <div>
+            <p className="eyebrow"><span className="eyebrow__dot" aria-hidden="true" />Human-in-the-loop evaluation</p>
             <h1>Rating Gallery</h1>
             <p className="header__sub">
               Human-in-the-loop evaluation of AI-generated visual outputs. Rate each result, add a note, and export your judgments.
@@ -140,15 +144,17 @@ export default function App() {
         </div>
       </header>
 
-      <main>
+      <main id="main">
         <SummaryBar s={summary} />
         {persistError && (
           <p className="banner" role="alert">
             Browser storage is unavailable, so ratings won't persist after you close this tab. Use Export to keep them.
           </p>
         )}
-        <GeneratePanel onImage={onImage} />
-        <ImportPanel onImported={onImported} />
+        <div className="tools">
+          <GeneratePanel onImage={onImage} />
+          <ImportPanel onImported={onImported} />
+        </div>
         {importStoreError && (
           <p className="banner" role="alert" data-testid="import-quota">
             Browser storage is full, so some imported images won't survive a reload. They still work in this tab; remove a few or Export JSON to keep your ratings.
@@ -161,13 +167,15 @@ export default function App() {
 
         {visible.length === 0 ? (
           <div className="empty" data-testid="empty">
-            <p>No results match this filter.</p>
+            <span className="empty__icon" aria-hidden="true" />
+            <p className="empty__title">No results match this filter.</p>
+            <p className="empty__hint">Try another filter, or rate a few outputs first.</p>
             <button type="button" className="btn" onClick={() => setFilter('all')}>Show all</button>
           </div>
         ) : (
           <ul className="grid" aria-label="Generated outputs">
-            {visible.map((s) => (
-              <li key={s.id}>
+            {visible.map((s, i) => (
+              <li key={s.id} className="ds-rise" style={{ '--i': Math.min(i, 12) } as CSSProperties}>
                 {s.source === 'local-import' ? (
                   <Card sample={s} entry={entries[s.id]} onRate={setRating} onNote={setNote} onUpdate={onUpdateImported} onRemove={onRemoveImported} />
                 ) : (
@@ -193,5 +201,6 @@ export default function App() {
         </div>
       )}
     </div>
+    </>
   );
 }
