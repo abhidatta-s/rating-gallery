@@ -19,7 +19,7 @@ declare const process: { env: Record<string, string | undefined> };
 export const MAX_PROMPT = 300;
 const TIMEOUT_MS = 25_000;
 const MAX_IMAGE_BYTES = 3_000_000; // keep under Vercel's 4.5 MB response cap after base64
-const DEFAULT_MODEL = 'black-forest-labs/FLUX.1-schnell';
+const DEFAULT_MODEL = 'stabilityai/stable-diffusion-3-medium-diffusers';
 const MODEL_RE = /^[\w.-]+\/[\w.-]+$/;
 
 export interface GenerateError {
