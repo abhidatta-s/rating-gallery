@@ -10,6 +10,8 @@ export interface Sample {
   kind: PreviewKind;
   /** 2-4 CSS colors used by the preview generator */
   palette: string[];
+  /** Set only for cards generated via /api/generate (data URL). */
+  imageUrl?: string;
 }
 
 export interface Entry {

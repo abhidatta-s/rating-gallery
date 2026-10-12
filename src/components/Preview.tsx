@@ -152,6 +152,9 @@ export default function Preview({ sample }: { sample: Sample }) {
   const uid = useId().replace(/:/g, '');
   return (
     <div className="preview">
+      {sample.imageUrl ? (
+        <img src={sample.imageUrl} alt={`Generated image, ${sample.model}. Prompt: ${sample.prompt}`} />
+      ) : (
       <svg
         viewBox={`0 0 ${W} ${H}`}
         preserveAspectRatio="xMidYMid slice"
@@ -160,8 +163,9 @@ export default function Preview({ sample }: { sample: Sample }) {
       >
         <Art sample={sample} uid={uid} />
       </svg>
+      )}
       <span className="chip chip--model">{sample.model}</span>
-      <span className="chip chip--seed">seed {sample.seed}</span>
+      <span className="chip chip--seed">{sample.imageUrl ? 'generated' : `seed ${sample.seed}`}</span>
     </div>
   );
 }

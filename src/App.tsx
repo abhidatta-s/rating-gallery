@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Entries, Filter, SortKey } from './types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { Entries, Filter, Sample, SortKey } from './types';
 import { SAMPLES } from './data/samples';
 import { useEntries } from './hooks/useEntries';
 import { matchesFilter, sortSamples, summarize } from './lib/gallery';
@@ -7,6 +7,8 @@ import { buildExport, copyText, downloadText } from './lib/exportRatings';
 import Card from './components/Card';
 import SummaryBar from './components/SummaryBar';
 import Toolbar from './components/Toolbar';
+import GeneratePanel from './components/GeneratePanel';
+import { loadGenerated, saveGenerated } from './lib/generated';
 
 interface Toast {
   id: number;
@@ -22,11 +24,13 @@ export default function App() {
   const [toast, setToast] = useState<Toast | null>(null);
   const toastTimer = useRef<number | undefined>(undefined);
   const resetBtn = useRef<HTMLButtonElement>(null);
+  const [generated, setGenerated] = useState<Sample[]>(() => loadGenerated());
+  const all = useMemo(() => [...generated, ...SAMPLES], [generated]);
 
-  const summary = useMemo(() => summarize(SAMPLES, entries), [entries]);
+  const summary = useMemo(() => summarize(all, entries), [all, entries]);
   const visible = useMemo(
-    () => sortSamples(SAMPLES.filter((s) => matchesFilter(filter, entries, s.id)), entries, sort),
-    [filter, sort, entries],
+    () => sortSamples(all.filter((s) => matchesFilter(filter, entries, s.id)), entries, sort),
+    [all, filter, sort, entries],
   );
 
   const showToast = (message: string, undo?: () => void) => {
@@ -35,6 +39,24 @@ export default function App() {
     toastTimer.current = window.setTimeout(() => setToast(null), undo ? 8000 : 2500);
   };
   useEffect(() => () => window.clearTimeout(toastTimer.current), []);
+
+  const onImage = useCallback((prompt: string, image: string, model: string, latencyMs: number) => {
+    const card: Sample = {
+      id: `g-${Date.now()}`,
+      model: model.split('/').pop() ?? model,
+      seed: 0,
+      prompt,
+      kind: 'solid',
+      palette: ['#888', '#222'],
+      imageUrl: image,
+    };
+    const next = [card, ...generated];
+    setGenerated(next);
+    const saved = saveGenerated(next);
+    showToast(saved === next.length
+      ? `Card added in ${latencyMs} ms and saved in this browser.`
+      : `Card added in ${latencyMs} ms. The image is too large for browser storage, so it stays in memory only until you reload.`);
+  }, [generated]);
 
   const anyData = summary.rated > 0 || summary.withNotes > 0;
 
@@ -50,11 +72,11 @@ export default function App() {
   };
 
   const onExport = () => {
-    downloadText('rating-gallery-export.json', buildExport(SAMPLES, entries));
+    downloadText('rating-gallery-export.json', buildExport(all, entries));
     showToast('Exported rating-gallery-export.json');
   };
   const onCopy = async () => {
-    const ok = await copyText(buildExport(SAMPLES, entries));
+    const ok = await copyText(buildExport(all, entries));
     showToast(ok ? 'Ratings JSON copied to clipboard.' : 'Copy failed. Use Export instead.');
   };
 
@@ -100,9 +122,10 @@ export default function App() {
             Browser storage is unavailable, so ratings won't persist after you close this tab. Use Export to keep them.
           </p>
         )}
+        <GeneratePanel onImage={onImage} />
         <Toolbar filter={filter} sort={sort} summary={summary} onFilter={setFilter} onSort={setSort} />
         <p className="visually-hidden" role="status" aria-live="polite">
-          Showing {visible.length} of {SAMPLES.length} results
+          Showing {visible.length} of {all.length} results
         </p>
 
         {visible.length === 0 ? (
@@ -122,7 +145,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <span>Sample outputs are generated locally from a seed. No images, no network, no tracking.</span>
+        <span>Sample outputs are generated locally from a seed. Only the optional Generate panel uses the network (this site's /api/generate). No tracking.</span>
         <span>Saved in this browser only.</span>
       </footer>
 
