@@ -94,7 +94,7 @@ export async function handle(request: Request, fetchImpl: typeof fetch = fetch):
   // 2) Pollinations.ai: free, no key. Retries with a new seed on 5xx/timeouts.
   for (let attempt = 0; attempt < POLL_ATTEMPTS; attempt++) {
     const seed = Math.floor(Math.random() * 1e9);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=512&height=512&model=flux&nologo=true&seed=${seed}`;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=512&height=512&model=flux&nologo=true&referrer=ratinggallery.vercel.app&seed=${seed}`;
     const r = await tryFetchImage(fetchImpl, url, POLL_TIMEOUT_MS, { headers: { accept: 'image/*' } });
     if ('image' in r) return json({ image: r.image, latencyMs: Date.now() - started, model: 'pollinations/flux', provider: 'pollinations' }, 200);
     errors.push(`Pollinations #${attempt + 1}: ${r.error}`);

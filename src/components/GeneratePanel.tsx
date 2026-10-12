@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { requestGeneration, sampleFallback, type GenerateResult } from '../lib/generated';
+import { requestGeneration, sampleFallback, browserGenerate, type GenerateResult } from '../lib/generated';
 
 const MAX = 300;
 
@@ -21,15 +21,22 @@ export default function GeneratePanel({ onImage }: Props) {
     setResult(null);
     setSampled(false);
     const r = await requestGeneration(p);
+    let final: GenerateResult = r;
     if (r.ok) {
       onImage(p, r.image, r.model, r.latencyMs);
     } else {
+      const b = await browserGenerate(p);
+      if (b) {
+        final = { ok: true, image: b.image, latencyMs: b.latencyMs, model: 'pollinations/flux' };
+        onImage(p, b.image, 'pollinations/flux', b.latencyMs);
+        setBusy(false); setResult(final); return;
+      }
       // Never surface a raw backend error: add a pre-generated sample card instead.
       const s = await sampleFallback();
       if (s) { onImage(s.prompt, s.image, 'sample (pre-generated)', 0); setSampled(true); }
     }
     setBusy(false);
-    setResult(r);
+    setResult(final);
   };
 
   return (

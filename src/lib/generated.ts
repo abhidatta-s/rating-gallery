@@ -78,3 +78,22 @@ export async function sampleFallback(): Promise<{ image: string; prompt: string 
     return null;
   }
 }
+
+/** Second chance from the visitor's browser: Pollinations.ai is free, keyless and CORS-enabled. */
+export async function browserGenerate(prompt: string): Promise<{ image: string; latencyMs: number } | null> {
+  const started = performance.now();
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const seed = Math.floor(Math.random() * 1e9);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&model=flux&nologo=true&referrer=ratinggallery.vercel.app&seed=${seed}`;
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 25_000);
+    try {
+      const res = await fetch(url, { signal: ctl.signal });
+      if (!res.ok || !(res.headers.get('content-type') ?? '').startsWith('image/')) continue;
+      const blob = await res.blob();
+      const image = await new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = bad; r.readAsDataURL(blob); });
+      return { image, latencyMs: Math.round(performance.now() - started) };
+    } catch { /* retry */ } finally { clearTimeout(timer); }
+  }
+  return null;
+}
