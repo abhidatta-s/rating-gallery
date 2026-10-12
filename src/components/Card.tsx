@@ -7,6 +7,9 @@ interface Props {
   entry: Entry | undefined;
   onRate: (id: string, rating: Verdict | null) => void;
   onNote: (id: string, note: string) => void;
+  /** Only passed for imported cards. */
+  onUpdate?: (id: string, patch: Partial<Sample>) => void;
+  onRemove?: (id: string) => void;
 }
 
 const DEBOUNCE_MS = 400;
@@ -20,7 +23,7 @@ function ThumbIcon({ down }: { down?: boolean }) {
   );
 }
 
-function CardImpl({ sample, entry, onRate, onNote }: Props) {
+function CardImpl({ sample, entry, onRate, onNote, onUpdate, onRemove }: Props) {
   const rating = entry?.rating ?? null;
   const note = entry?.note ?? '';
   const [draft, setDraft] = useState(note);
@@ -80,11 +83,11 @@ function CardImpl({ sample, entry, onRate, onNote }: Props) {
       <Preview sample={sample} />
       <div className="card__body">
         <p id={titleId} className="card__prompt">
-          <span className="visually-hidden">{sample.model}, seed {sample.seed}. Prompt: </span>
-          {sample.prompt}
+          <span className="visually-hidden">{sample.model}, seed {sample.seed ?? 'unknown'}. Prompt: </span>
+          {sample.prompt || <em className="card__noprompt">No prompt recorded</em>}
         </p>
 
-        <div className="rate" role="group" aria-label={`Rate ${sample.model} output, seed ${sample.seed}`}>
+        <div className="rate" role="group" aria-label={`Rate ${sample.model} output, ${sample.source === 'local-import' ? `imported ${sample.fileName ?? ''}`.trim() : `seed ${sample.seed}`}`}>
           <button
             type="button"
             className="rate__btn rate__btn--up"
@@ -123,8 +126,42 @@ function CardImpl({ sample, entry, onRate, onNote }: Props) {
             onBlur={() => commit(draft)}
           />
         </div>
+        {sample.source === 'local-import' && onUpdate && onRemove && (
+          <ImportMeta sample={sample} onUpdate={onUpdate} onRemove={onRemove} />
+        )}
       </div>
     </article>
+  );
+}
+
+function ImportMeta({ sample, onUpdate, onRemove }: { sample: Sample; onUpdate: NonNullable<Props['onUpdate']>; onRemove: NonNullable<Props['onRemove']> }) {
+  const id = (k: string) => `imp-${k}-${sample.id}`;
+  const num = (v: string): number | null => (/^\s*-?\d+\s*$/.test(v) ? Number(v) : null);
+  const found = sample.metaFoundIn ?? [];
+  return (
+    <details className="imp" data-testid={`imp-meta-${sample.id}`}>
+      <summary>Edit metadata <span className="imp__src">source: imported{sample.fileName ? ` · ${sample.fileName}` : ''}</span></summary>
+      <p className="imp__hint">
+        {found.length ? `Prefilled from file metadata (${found.join(', ')}). Check before trusting.` : 'No generation metadata found in this file; fields left blank.'}
+      </p>
+      <label htmlFor={id('prompt')}>Prompt</label>
+      <textarea id={id('prompt')} rows={2} maxLength={2000} defaultValue={sample.prompt} onBlur={(e) => onUpdate(sample.id, { prompt: e.target.value.trim() })} />
+      <label htmlFor={id('model')}>Model</label>
+      <input id={id('model')} defaultValue={sample.model} maxLength={200} onBlur={(e) => onUpdate(sample.id, { model: e.target.value.trim() || sample.model })} />
+      <div className="imp__row">
+        <span>
+          <label htmlFor={id('seed')}>Seed</label>
+          <input id={id('seed')} inputMode="numeric" defaultValue={sample.seed ?? ''} onBlur={(e) => onUpdate(sample.id, { seed: num(e.target.value) })} />
+        </span>
+        <span>
+          <label htmlFor={id('steps')}>Steps</label>
+          <input id={id('steps')} inputMode="numeric" defaultValue={sample.steps ?? ''} onBlur={(e) => onUpdate(sample.id, { steps: num(e.target.value) })} />
+        </span>
+      </div>
+      <label htmlFor={id('settings')}>Settings notes</label>
+      <textarea id={id('settings')} rows={2} maxLength={500} placeholder="e.g. sampler, CFG, LoRA" defaultValue={sample.settingsNote ?? ''} onBlur={(e) => onUpdate(sample.id, { settingsNote: e.target.value })} />
+      <button type="button" className="btn btn--ghost imp__remove" onClick={() => onRemove(sample.id)}>Remove imported image</button>
+    </details>
   );
 }
 

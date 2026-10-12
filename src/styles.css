@@ -173,3 +173,19 @@ h1 { margin: 0; font-size: 24px; letter-spacing: -0.02em; line-height: 1.2; }
 .gen__placeholder { grid-row: span 2; height: 72px; display: grid; place-items: center; border-radius: 8px; background: repeating-linear-gradient(45deg, rgba(127,127,127,.15) 0 8px, transparent 8px 16px); font-size: .75rem; }
 .gen__detail { opacity: .75; word-break: break-word; }
 .preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Import panel (local files, no network) */
+.drop { display: flex; align-items: center; gap: 12px; padding: 14px; border: 2px dashed rgba(127,127,127,.4); border-radius: 10px; }
+.drop.is-over { border-color: var(--accent); background: rgba(124, 140, 255, .08); }
+.drop__text { font-size: .85rem; opacity: .75; }
+.card__noprompt { opacity: .6; }
+.imp { margin-top: 10px; font-size: .85rem; }
+.imp summary { cursor: pointer; font-weight: 600; }
+.imp summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.imp__src { font-weight: 400; opacity: .7; margin-left: 6px; }
+.imp__hint { margin: 6px 0; opacity: .75; }
+.imp label { display: block; margin: 8px 0 3px; font-size: .8rem; opacity: .85; }
+.imp input, .imp textarea { width: 100%; box-sizing: border-box; padding: 6px 8px; border-radius: 8px; border: 1px solid rgba(127,127,127,.5); background: transparent; color: inherit; font: inherit; }
+.imp input:focus, .imp textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124, 140, 255, .25); }
+.imp__row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.imp__remove { margin-top: 10px; }

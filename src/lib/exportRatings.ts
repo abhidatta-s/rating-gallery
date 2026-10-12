@@ -10,6 +10,9 @@ export function buildExport(samples: Sample[], entries: Entries): string {
       prompt: s.prompt,
       rating: e?.rating ?? null,
       note: e?.note ?? '',
+      ...(s.source === 'local-import'
+        ? { source: s.source, fileName: s.fileName ?? null, steps: s.steps ?? null, settingsNote: s.settingsNote ?? '', metadataReadFrom: s.metaFoundIn ?? [] }
+        : {}),
     };
   });
   return JSON.stringify({ exportedAt: new Date().toISOString(), total: items.length, items }, null, 2);

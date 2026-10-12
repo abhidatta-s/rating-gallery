@@ -9,6 +9,8 @@ import SummaryBar from './components/SummaryBar';
 import Toolbar from './components/Toolbar';
 import GeneratePanel from './components/GeneratePanel';
 import { loadGenerated, saveGenerated } from './lib/generated';
+import ImportPanel from './components/ImportPanel';
+import { loadImported, saveImported } from './lib/imported';
 
 interface Toast {
   id: number;
@@ -25,7 +27,9 @@ export default function App() {
   const toastTimer = useRef<number | undefined>(undefined);
   const resetBtn = useRef<HTMLButtonElement>(null);
   const [generated, setGenerated] = useState<Sample[]>(() => loadGenerated());
-  const all = useMemo(() => [...generated, ...SAMPLES], [generated]);
+  const [imported, setImported] = useState<Sample[]>(() => loadImported());
+  const [importStoreError, setImportStoreError] = useState(false);
+  const all = useMemo(() => [...imported, ...generated, ...SAMPLES], [imported, generated]);
 
   const summary = useMemo(() => summarize(all, entries), [all, entries]);
   const visible = useMemo(
@@ -57,6 +61,27 @@ export default function App() {
       ? `Card added in ${latencyMs} ms and saved in this browser.`
       : `Card added in ${latencyMs} ms. The image is too large for browser storage, so it stays in memory only until you reload.`);
   }, [generated]);
+
+  const commitImported = useCallback((next: Sample[]) => {
+    setImported(next);
+    const ok = saveImported(next);
+    setImportStoreError(!ok);
+    return ok;
+  }, []);
+  const importedRef = useRef(imported);
+  importedRef.current = imported;
+  const onImported = useCallback((cards: Sample[]) => {
+    const ok = commitImported([...cards, ...importedRef.current]);
+    return ok;
+  }, [commitImported]);
+  const onUpdateImported = useCallback((id: string, patch: Partial<Sample>) => {
+    commitImported(importedRef.current.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }, [commitImported]);
+  const onRemoveImported = useCallback((id: string) => {
+    commitImported(importedRef.current.filter((s) => s.id !== id));
+    showToast('Imported image removed.');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commitImported]);
 
   const anyData = summary.rated > 0 || summary.withNotes > 0;
 
@@ -123,6 +148,12 @@ export default function App() {
           </p>
         )}
         <GeneratePanel onImage={onImage} />
+        <ImportPanel onImported={onImported} />
+        {importStoreError && (
+          <p className="banner" role="alert" data-testid="import-quota">
+            Browser storage is full, so some imported images won't survive a reload. They still work in this tab; remove a few or Export JSON to keep your ratings.
+          </p>
+        )}
         <Toolbar filter={filter} sort={sort} summary={summary} onFilter={setFilter} onSort={setSort} />
         <p className="visually-hidden" role="status" aria-live="polite">
           Showing {visible.length} of {all.length} results
@@ -137,7 +168,11 @@ export default function App() {
           <ul className="grid" aria-label="Generated outputs">
             {visible.map((s) => (
               <li key={s.id}>
-                <Card sample={s} entry={entries[s.id]} onRate={setRating} onNote={setNote} />
+                {s.source === 'local-import' ? (
+                  <Card sample={s} entry={entries[s.id]} onRate={setRating} onNote={setNote} onUpdate={onUpdateImported} onRemove={onRemoveImported} />
+                ) : (
+                  <Card sample={s} entry={entries[s.id]} onRate={setRating} onNote={setNote} />
+                )}
               </li>
             ))}
           </ul>
@@ -145,7 +180,7 @@ export default function App() {
       </main>
 
       <footer className="footer">
-        <span>Sample outputs are generated locally from a seed. Only the optional Generate panel uses the network (this site's /api/generate). No tracking.</span>
+        <span>Sample outputs are generated locally from a seed. Only the optional Generate panel uses the network (this site's /api/generate). Imported images are read in your browser and never uploaded. No tracking.</span>
         <span>Saved in this browser only.</span>
       </footer>
 

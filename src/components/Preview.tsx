@@ -6,7 +6,7 @@ const W = 400;
 const H = 300;
 
 function Art({ sample, uid }: { sample: Sample; uid: string }) {
-  const rnd = mulberry32(sample.seed);
+  const rnd = mulberry32(sample.seed ?? 0);
   const p = sample.palette;
   const c = (i: number) => p[i % p.length] as string;
 
@@ -153,7 +153,9 @@ export default function Preview({ sample }: { sample: Sample }) {
   return (
     <div className="preview">
       {sample.imageUrl ? (
-        <img src={sample.imageUrl} alt={`Generated image, ${sample.model}. Prompt: ${sample.prompt}`} />
+        <img src={sample.imageUrl} alt={sample.source === 'local-import'
+          ? `Imported image${sample.fileName ? ` ${sample.fileName}` : ''}, ${sample.model}${sample.prompt ? `. Prompt: ${sample.prompt}` : ''}`
+          : `Generated image, ${sample.model}. Prompt: ${sample.prompt}`} />
       ) : (
       <svg
         viewBox={`0 0 ${W} ${H}`}
@@ -165,7 +167,7 @@ export default function Preview({ sample }: { sample: Sample }) {
       </svg>
       )}
       <span className="chip chip--model">{sample.model}</span>
-      <span className="chip chip--seed">{sample.imageUrl ? 'generated' : `seed ${sample.seed}`}</span>
+      <span className="chip chip--seed">{sample.source === 'local-import' ? 'imported' : sample.imageUrl ? 'generated' : `seed ${sample.seed}`}</span>
     </div>
   );
 }
