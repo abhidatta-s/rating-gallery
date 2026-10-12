@@ -1,0 +1,16 @@
+/* Light theme overrides (dark is the default and is unchanged) */
+:root[data-theme=light]{--accent:#5b56c2;color-scheme:light}
+:root[data-theme=light] h1{background:linear-gradient(180deg,#2a303b 40%,#4a5160);-webkit-background-clip:text;background-clip:text}
+:root[data-theme=light] .btn--primary{color:#f3f5f8;box-shadow:0 0 0 1px rgba(42,48,59,.2),0 10px 26px -14px rgba(91,86,194,.6)}
+:root[data-theme=light] .btn--primary:hover:not(:disabled){background:#1f242d;box-shadow:0 0 0 1px #1f242d,0 14px 34px -14px rgba(192,58,118,.45)}
+:root[data-theme=light] .btn--danger{color:#fff}
+:root[data-theme=light] .btn--danger:hover:not(:disabled){background:#a82a45;border-color:#a82a45}
+:root[data-theme=light] .summary,:root[data-theme=light] .card{background:linear-gradient(180deg,#f8f9fb,#f1f3f6)}
+:root[data-theme=light] .banner{background:rgba(168,95,0,.08);border-color:rgba(168,95,0,.3);color:#7a4500}
+:root[data-theme=light] .gen__input::placeholder,:root[data-theme=light] .note textarea::placeholder{color:#6b7280}
+:root[data-theme=light] .chip{background:rgba(243,245,248,.82);color:var(--ds-fg)}
+:root[data-theme=light] .chip--seed{color:#3a414d}
+:root[data-theme=light] .toast__undo{background:rgba(91,86,194,.12);color:#4a45a8}
+:root[data-theme=light] .eyebrow__dot{box-shadow:0 0 0 3px rgba(23,128,90,.16)}
+:root[data-theme=light] .toast{background:rgba(248,249,251,.94);box-shadow:0 20px 50px -24px rgba(30,40,60,.35)}
+:root[data-theme=light] .toolbar{background:rgba(233,237,242,.8)}
