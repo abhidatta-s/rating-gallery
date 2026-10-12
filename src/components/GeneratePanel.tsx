@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { requestGeneration, type GenerateResult } from '../lib/generated';
+import { requestGeneration, sampleFallback, type GenerateResult } from '../lib/generated';
 
 const MAX = 300;
 
@@ -11,6 +11,7 @@ export default function GeneratePanel({ onImage }: Props) {
   const [prompt, setPrompt] = useState('');
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<GenerateResult | null>(null);
+  const [sampled, setSampled] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,18 +19,25 @@ export default function GeneratePanel({ onImage }: Props) {
     if (!p || busy) return;
     setBusy(true);
     setResult(null);
+    setSampled(false);
     const r = await requestGeneration(p);
+    if (r.ok) {
+      onImage(p, r.image, r.model, r.latencyMs);
+    } else {
+      // Never surface a raw backend error: add a pre-generated sample card instead.
+      const s = await sampleFallback();
+      if (s) { onImage(s.prompt, s.image, 'sample (pre-generated)', 0); setSampled(true); }
+    }
     setBusy(false);
     setResult(r);
-    if (r.ok) onImage(p, r.image, r.model, r.latencyMs);
   };
 
   return (
     <section className="gen" aria-busy={busy} aria-labelledby="gen-title" data-testid="gen-panel">
-      <h2 id="gen-title" className="gen__title">Generate a card <span className="gen__tag">experimental · Hugging Face</span></h2>
+      <h2 id="gen-title" className="gen__title">Generate a card <span className="gen__tag">experimental · free models</span></h2>
       <p className="gen__hint">
-        Sends your prompt to this site's server function, which calls Hugging Face with a server-side token.
-        Free accounts may need credits; failures are shown as-is.
+        Sends your prompt to this site's server function, which tries Hugging Face and falls back to the free
+        Pollinations.ai API. If live generation is busy, a pre-generated sample card is added instead.
       </p>
       <form className="gen__form" onSubmit={submit}>
         <label htmlFor="gen-prompt" className="visually-hidden">Prompt</label>
@@ -46,16 +54,9 @@ export default function GeneratePanel({ onImage }: Props) {
         </button>
       </form>
       <div aria-live="polite" data-testid="gen-status">
-        {result?.ok && <p className="gen__ok">Added a new card · {result.latencyMs} ms · {result.model}</p>}
+        {result?.ok && <p className="gen__ok" data-testid="gen-ok">Added a new card · {result.latencyMs} ms · {result.model}</p>}
         {result && !result.ok && (
-          <div className="gen__fail" role="alert">
-            <div className="gen__placeholder" aria-hidden="true">No image</div>
-            <p>
-              <strong>Generation failed</strong> · status {result.status} · {result.error}
-              {result.latencyMs !== null && <> · {result.latencyMs} ms</>}
-            </p>
-            <p className="gen__detail">{result.detail}</p>
-          </div>
+          <p className="gen__note" data-testid="gen-sampled">{sampled ? 'Live generation busy, showing samples.' : 'Live generation busy, try again in a moment.'}</p>
         )}
       </div>
     </section>

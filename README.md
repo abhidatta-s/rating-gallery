@@ -110,3 +110,7 @@ Deploy to Vercel with the Vite defaults:
 Vercel Authentication is on by default for new projects. To make the demo URL public, turn it off under **Settings → Deployment Protection**.
 
 Ratings are stored in each visitor's own browser (`localStorage`), so nothing is shared or sent to a server.
+
+## Generation fallback
+
+`/api/generate` tries Hugging Face (server-side `HF_TOKEN`) first. If that fails (for example 402, no inference credits on a free account), it uses the free, keyless Pollinations.ai API (flux) with one retry. If both fail, the UI adds one of six pre-generated sample images from `public/samples/` (made with Pollinations) and shows "Live generation busy, showing samples." Raw backend errors are never shown.

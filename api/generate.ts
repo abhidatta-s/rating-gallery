@@ -1,9 +1,11 @@
 /**
  * POST /api/generate  { "prompt": string }
  *
- * Vercel Function (Node.js runtime, Web-standard fetch handler). Calls the
- * Hugging Face Inference router for ONE text-to-image model. The HF token is
- * read from the server-side env var HF_TOKEN and is never logged or returned.
+ * Vercel Function (Node.js runtime, Web-standard fetch handler).
+ * 1) Hugging Face Inference router (server-side HF_TOKEN, never logged or returned).
+ * 2) If HF fails (e.g. 402: the free account has no inference credits), falls back to
+ *    Pollinations.ai, a free keyless text-to-image API (flux), with one retry.
+ * The client shows pre-generated samples if both fail, so visitors always see images.
  *
  * Success: 200 { image: "data:<type>;base64,...", latencyMs, model }
  * Failure: <status> { error, status, detail, latencyMs, model }
@@ -17,7 +19,9 @@
 declare const process: { env: Record<string, string | undefined> };
 
 export const MAX_PROMPT = 300;
-const TIMEOUT_MS = 25_000;
+const HF_TIMEOUT_MS = 15_000;
+const POLL_TIMEOUT_MS = 20_000;
+const POLL_ATTEMPTS = 2;
 const MAX_IMAGE_BYTES = 3_000_000; // keep under Vercel's 4.5 MB response cap after base64
 const DEFAULT_MODEL = 'stabilityai/stable-diffusion-3-medium-diffusers';
 const MODEL_RE = /^[\w.-]+\/[\w.-]+$/;
@@ -71,40 +75,49 @@ export async function handle(request: Request, fetchImpl: typeof fetch = fetch):
     return fail('bad_request', 400, `prompt must be a string of 1-${MAX_PROMPT} characters.`, model);
   }
 
-  const token = process.env.HF_TOKEN;
-  if (!token) {
-    return fail('missing_token', 500, 'HF_TOKEN is not set on the server.', model);
-  }
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const p = prompt.trim();
   const started = Date.now();
-  try {
-    const upstream = await fetchImpl(`https://router.huggingface.co/hf-inference/models/${model}`, {
+  const errors: string[] = [];
+
+  // 1) Hugging Face (only if a token is configured). Fails fast on 401/402 (no credits).
+  const token = process.env.HF_TOKEN;
+  if (token) {
+    const r = await tryFetchImage(fetchImpl, `https://router.huggingface.co/hf-inference/models/${model}`, HF_TIMEOUT_MS, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json', accept: 'image/*' },
-      body: JSON.stringify({ inputs: prompt.trim() }),
-      signal: controller.signal,
+      body: JSON.stringify({ inputs: p }),
     });
-    const latencyMs = Date.now() - started;
-    const type = upstream.headers.get('content-type') ?? '';
+    if ('image' in r) return json({ image: r.image, latencyMs: Date.now() - started, model, provider: 'huggingface' }, 200);
+    errors.push(`HF: ${r.error}`);
+  }
 
-    if (!upstream.ok || !type.startsWith('image/')) {
-      const text = await upstream.text().catch(() => '');
-      const status = upstream.ok ? 502 : upstream.status;
-      return fail('upstream_error', status, `HF responded ${upstream.status} (${type || 'no content-type'}): ${text}`, model, latencyMs);
+  // 2) Pollinations.ai: free, no key. Retries with a new seed on 5xx/timeouts.
+  for (let attempt = 0; attempt < POLL_ATTEMPTS; attempt++) {
+    const seed = Math.floor(Math.random() * 1e9);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=512&height=512&model=flux&nologo=true&seed=${seed}`;
+    const r = await tryFetchImage(fetchImpl, url, POLL_TIMEOUT_MS, { headers: { accept: 'image/*' } });
+    if ('image' in r) return json({ image: r.image, latencyMs: Date.now() - started, model: 'pollinations/flux', provider: 'pollinations' }, 200);
+    errors.push(`Pollinations #${attempt + 1}: ${r.error}`);
+  }
+
+  return fail('generation_unavailable', 503, errors.join(' | '), model, Date.now() - started);
+}
+
+async function tryFetchImage(fetchImpl: typeof fetch, url: string, timeoutMs: number, init: RequestInit): Promise<{ image: string } | { error: string }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetchImpl(url, { ...init, signal: controller.signal });
+    const type = res.headers.get('content-type') ?? '';
+    if (!res.ok || !type.startsWith('image/')) {
+      const text = await res.text().catch(() => '');
+      return { error: `${res.status} ${text.slice(0, 120)}` };
     }
-    const buf = await upstream.arrayBuffer();
-    if (buf.byteLength > MAX_IMAGE_BYTES) {
-      return fail('image_too_large', 502, `Image was ${buf.byteLength} bytes; limit ${MAX_IMAGE_BYTES}.`, model, latencyMs);
-    }
-    return json({ image: `data:${type};base64,${toBase64(buf)}`, latencyMs, model }, 200);
+    const buf = await res.arrayBuffer();
+    if (buf.byteLength > MAX_IMAGE_BYTES) return { error: `image too large (${buf.byteLength} bytes)` };
+    return { image: `data:${type};base64,${toBase64(buf)}` };
   } catch (e) {
-    const latencyMs = Date.now() - started;
-    if (controller.signal.aborted) {
-      return fail('timeout', 504, `No response from HF within ${TIMEOUT_MS} ms.`, model, latencyMs);
-    }
-    return fail('network_error', 502, e instanceof Error ? e.message : 'Unknown error', model, latencyMs);
+    return { error: controller.signal.aborted ? `timeout after ${timeoutMs} ms` : e instanceof Error ? e.message : 'network error' };
   } finally {
     clearTimeout(timer);
   }

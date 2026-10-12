@@ -168,3 +168,4 @@ h1{margin:0;font-size:clamp(32px,4.4vw,52px);letter-spacing:-.045em;line-height:
   @keyframes pop{from{opacity:0}to{opacity:1}}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+.gen__note{color:var(--muted);font-size:13px;margin:8px 0 0}

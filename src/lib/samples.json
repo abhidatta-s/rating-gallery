@@ -1,0 +1,26 @@
+[
+ {
+  "file": "/samples/sample-1.jpg",
+  "prompt": "matte white ceramic mug on a light oak table"
+ },
+ {
+  "file": "/samples/sample-2.jpg",
+  "prompt": "red fox resting in fresh snow"
+ },
+ {
+  "file": "/samples/sample-3.jpg",
+  "prompt": "minimal desk setup with a laptop and a plant, soft morning light"
+ },
+ {
+  "file": "/samples/sample-4.jpg",
+  "prompt": "isometric illustration of a tiny lighthouse on a rock"
+ },
+ {
+  "file": "/samples/sample-5.jpg",
+  "prompt": "bowl of ramen with steam, top-down photo"
+ },
+ {
+  "file": "/samples/sample-6.jpg",
+  "prompt": "vintage film camera on a linen background"
+ }
+]

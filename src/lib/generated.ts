@@ -1,4 +1,5 @@
 import type { Sample } from '../types';
+import samples from './samples.json';
 
 export const GENERATED_KEY = 'rating-gallery:generated:v1';
 /** Data URLs larger than this stay in memory only (lost on reload). */
@@ -63,5 +64,17 @@ export function saveGenerated(list: Sample[]): number {
     return small.length;
   } catch {
     return 0;
+  }
+}
+
+/** Pre-generated images shown when live generation is unavailable (never a raw error). */
+export async function sampleFallback(): Promise<{ image: string; prompt: string } | null> {
+  const s = samples[Math.floor(Math.random() * samples.length)]!;
+  try {
+    const blob = await (await fetch(s.file)).blob();
+    const image = await new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = bad; r.readAsDataURL(blob); });
+    return { image, prompt: s.prompt };
+  } catch {
+    return null;
   }
 }
