@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" role="img" aria-label="Rating Gallery architecture: sample, imported and generated cards feed a rating loop that saves to localStorage and exports JSON; generation falls back from Hugging Face to Pollinations to bundled samples.">
+<title>Rating Gallery architecture: sample, imported and generated cards feed a rating loop that saves to localStorage and exports JSON; generation falls back from Hugging Face to Pollinations to bundled samples.</title>
+<defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#a5b4fc"/></marker></defs>
+<rect width="960" height="540" rx="16" fill="#151722"/>
+<text x="32" y="44" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="20" font-weight="600" fill="#e6e8f0" text-anchor="start">Rating Gallery</text>
+<text x="32" y="68" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#a3acc2" text-anchor="start">Human-in-the-loop rating of AI images. Everything runs in the browser except one optional server function.</text>
+<rect x="24" y="84" width="912" height="288" rx="12" fill="none" stroke="#3a3f5c" stroke-dasharray="4 4"/>
+<text x="38" y="104" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#7c869f" text-anchor="start">BROWSER  (REACT 18 + VITE + TYPESCRIPT)</text>
+<rect x="48" y="118" width="240" height="72" rx="10" fill="#1e2132" stroke="#3a3f5c" stroke-width="1"/>
+<text x="64" y="144" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6e8f0" text-anchor="start">Sample cards</text>
+<text x="64" y="164" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">12 synthetic previews drawn from a seed</text>
+<rect x="48" y="200" width="240" height="72" rx="10" fill="#1e2132" stroke="#3a3f5c" stroke-width="1"/>
+<text x="64" y="226" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6e8f0" text-anchor="start">Import panel</text>
+<text x="64" y="246" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">PNG, JPG, WebP, downscaled to 768 px</text>
+<text x="64" y="264" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">prompt and seed read from PNG text</text>
+<rect x="48" y="282" width="240" height="72" rx="10" fill="#1e2132" stroke="#3a3f5c" stroke-width="1"/>
+<text x="64" y="308" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6e8f0" text-anchor="start">Generate panel</text>
+<text x="64" y="328" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">prompt up to 300 characters</text>
+<rect x="352" y="170" width="256" height="120" rx="10" fill="#23273b" stroke="#6366f1" stroke-width="1.5"/>
+<rect x="352" y="180" width="3" height="100" rx="1.5" fill="#a5b4fc"/>
+<text x="368" y="196" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#a5b4fc" text-anchor="start">useEntries</text>
+<text x="368" y="216" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">thumbs up, thumbs down or unrated</text>
+<text x="368" y="234" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">debounced note per card</text>
+<text x="368" y="252" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">filter, sort and summary counts</text>
+<rect x="672" y="124" width="240" height="66" rx="10" fill="#1e2132" stroke="#3a3f5c" stroke-width="1"/>
+<text x="688" y="150" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6e8f0" text-anchor="start">Export</text>
+<text x="688" y="170" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">JSON download or clipboard</text>
+<rect x="672" y="240" width="240" height="66" rx="10" fill="#1e2132" stroke="#3a3f5c" stroke-width="1"/>
+<text x="688" y="266" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6e8f0" text-anchor="start">localStorage</text>
+<text x="688" y="286" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">ratings, notes, imported and</text>
+<text x="688" y="304" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">generated cards (this browser only)</text>
+<path d="M288 154 L320 154 L320 205 L352 205" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M288 236 L352 236" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M288 318 L320 318 L320 268 L352 268" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M608 200 L640 200 L640 157 L672 157" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M608 258 L640 258 L640 273 L672 273" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="24" y="392" width="912" height="124" rx="12" fill="none" stroke="#3a3f5c" stroke-dasharray="4 4"/>
+<text x="922" y="412" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#7c869f" text-anchor="end">GENERATION FALLBACK CHAIN  (FIRST SUCCESS WINS)</text>
+<rect x="48" y="424" width="200" height="72" rx="10" fill="#23273b" stroke="#6366f1" stroke-width="1.5"/>
+<rect x="48" y="434" width="3" height="52" rx="1.5" fill="#a5b4fc"/>
+<text x="64" y="450" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#a5b4fc" text-anchor="start">1. Hugging Face</text>
+<text x="64" y="470" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">Vercel function /api/generate</text>
+<text x="64" y="488" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">only if HF_TOKEN is set</text>
+<rect x="276" y="424" width="200" height="72" rx="10" fill="#1e2132" stroke="#3a3f5c" stroke-width="1"/>
+<text x="292" y="450" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6e8f0" text-anchor="start">2. Pollinations.ai</text>
+<text x="292" y="470" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">same function, flux model</text>
+<text x="292" y="488" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">2 attempts, new seed each</text>
+<rect x="504" y="424" width="200" height="72" rx="10" fill="#1e2132" stroke="#3a3f5c" stroke-width="1"/>
+<text x="520" y="450" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6e8f0" text-anchor="start">3. Pollinations.ai</text>
+<text x="520" y="470" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">called from the browser</text>
+<text x="520" y="488" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">2 attempts</text>
+<rect x="732" y="424" width="180" height="72" rx="10" fill="#1e2132" stroke="#3a3f5c" stroke-width="1"/>
+<text x="748" y="450" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#e6e8f0" text-anchor="start">4. Bundled sample</text>
+<text x="748" y="470" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">one of 6 images in</text>
+<text x="748" y="488" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="12" font-weight="400" fill="#a3acc2" text-anchor="start">public/samples</text>
+<path d="M248 460 L276 460" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M476 460 L504 460" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M704 460 L732 460" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M168 354 L168 424" fill="none" stroke="#a5b4fc" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="214" y="384" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif" font-size="11" font-weight="400" fill="#a3acc2" text-anchor="middle">POST prompt</text>
+</svg>

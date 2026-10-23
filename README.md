@@ -1,49 +1,47 @@
 # Rating Gallery
 
-A small interface for **human-in-the-loop evaluation of AI-generated images**. Browse a grid of outputs, give each one a thumbs up or down, add a note, then filter, sort and export your judgments as JSON. You can also generate new cards from a prompt or import your own local renders and rate them in the same loop.
+**Rate AI-generated images by hand, add notes, and export your judgments as clean JSON.**
 
-![Rating Gallery screenshot](docs/screenshot.png)
+[![React](https://img.shields.io/badge/React-18-6366f1)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-6366f1)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-7-6366f1)](https://vite.dev/)
+[![Vercel Function](https://img.shields.io/badge/Vercel-serverless%20function-64748b)](https://vercel.com/docs/functions)
+[![Runtime deps](https://img.shields.io/badge/runtime%20deps-react%20%2B%20react--dom-64748b)](package.json)
 
 **Live demo:** https://ratinggallery.vercel.app
 
-**Stack:** React 18, TypeScript, Vite, a Vercel serverless function (`/api/generate`) that calls the Hugging Face Inference API with a fallback to Pollinations.ai, and browser `localStorage`. Runtime dependencies are `react` and `react-dom` only.
+> **Example:** type `red fox resting in fresh snow`, press Generate, and a new card joins the grid. Give it a thumbs down, note "fox anatomy off, snow looks plastic", then filter to Disliked and export. You get one JSON file with the prompt, model, seed, verdict and note for every card.
 
-**Why I built this:** automated metrics only tell part of the story when you evaluate generative image models, so I wanted a fast, accessible surface for a person to judge prompt adherence and quality and export those judgments. Part of my portfolio Lab at https://www.abhidattasrichandan.com
+![Rating Gallery screenshot](docs/screenshot.png)
 
-## What it does
+## Architecture
 
-- **Side-by-side judgment.** 12 sample cards from several models and seeds sit in one grid, so reviewers compare like with like. The sample previews are drawn locally from a seed as inline SVG, so the base gallery needs no images, keys or network.
-- **Low-friction labeling.** One click for a binary verdict (click again to clear), plus an optional note per card with debounced autosave.
-- **Fast triage.** Filter by All, Liked, Disliked or Unrated with live counts. Sort by default order, rating high to low, rating low to high, or notes first. A summary bar shows rated x/N, % liked, disliked, notes and progress.
-- **Generate a card (experimental, free models).** A prompt (up to 300 characters) goes to the `/api/generate` server function. It tries the Hugging Face Inference API first, only if an `HF_TOKEN` is configured, then falls back to the free, keyless Pollinations.ai API (flux) with one retry. If that fails, the browser tries Pollinations.ai directly, and if live generation is still unavailable the UI adds one of six pre-generated sample images from `public/samples/` instead of showing a raw error.
-- **Import local images.** Add PNG, JPG or WebP files (built for Draw Things exports). Files are read in the browser, downscaled to 768 px and saved locally; nothing is uploaded. Prompt, seed, steps and model are prefilled when found in the PNG's text metadata (XMP or A1111-style `parameters`), and each imported card can be edited or removed.
-- **Portable results.** Export the labeled set as a JSON file or copy it to the clipboard. Reset asks for confirmation and offers an 8-second Undo.
-- **Accessible by default.** Native buttons with `aria-pressed`, labelled form fields, a skip link, visible focus, live-region announcements and reduced-motion support.
-- **Light and dark themes.** Dark by default, with a toggle in the demo bar; the choice is saved, and `?theme=light` or `?theme=dark` overrides it.
+![Rating Gallery architecture](assets/architecture.svg)
 
-## Security note
+Everything runs in the browser except one optional Vercel function, `api/generate.ts`. Ratings, notes and cards never leave the visitor's browser.
 
-The Hugging Face token is read only from the server-side environment variable `HF_TOKEN` inside the Vercel function. It is never sent to the browser, logged or returned. Do not prefix it with `VITE_`, because Vite would inline it into the client bundle. The endpoint has no rate limiting or authentication, and free Hugging Face accounts may have no inference credits (the function then falls back as described above).
+## How it works
 
-## Getting started
+1. **Cards come from three places.**
+   - 12 sample cards whose previews are drawn locally as inline SVG from a seed and palette (`Preview.tsx`, `prng.ts`). Their model names ("Model A", "Model B", "Model C") are placeholders, not real models.
+   - Local imports: PNG, JPG or WebP files are read in the browser and downscaled to 768 px. For PNGs, `pngMeta.ts` reads `tEXt` and uncompressed `iTXt` chunks (XMP or A1111-style `parameters`) to prefill prompt, seed, steps and model. It never invents a missing value.
+   - Generated cards from a prompt of up to 300 characters (see the fallback chain below).
+2. **The rating loop.** `useEntries` holds a thumbs up, thumbs down or unrated verdict per card and a debounced note. `gallery.ts` filters (All, Liked, Disliked, Unrated), sorts and computes the summary bar as pure functions.
+3. **Persistence.** Ratings, notes and cards are validated and saved to `localStorage`. Large generated images (data URLs over 400,000 characters) stay in memory only.
+4. **Export.** `exportRatings.ts` builds one JSON document and downloads it or copies it to the clipboard. Reset asks first and offers an 8-second Undo.
 
-Requires Node.js 20.19 or newer.
+### Generation fallback chain
 
-```bash
-npm install
-npm run dev
-```
+The first step that returns an image wins:
 
-Open the URL Vite prints (default http://localhost:5173). `npm run dev` serves the front end only; to try `/api/generate` locally, run `vercel dev` instead. Copy `.env.example` to `.env` and set `HF_TOKEN` (optional) and `HF_IMAGE_MODEL` (optional; the code defaults to `stabilityai/stable-diffusion-3-medium-diffusers`).
+| Step | Where | Notes |
+| --- | --- | --- |
+| 1. Hugging Face Inference | `api/generate.ts` (server) | Only if `HF_TOKEN` is set. 15 s timeout. |
+| 2. Pollinations.ai (flux) | `api/generate.ts` (server) | Free and keyless. 2 attempts with a new seed. |
+| 3. Pollinations.ai (flux) | browser, `generated.ts` | Second chance from the visitor's browser. |
+| 4. Bundled sample image | `public/samples/` | One of 6 pre-generated images, so the UI never shows a raw error. |
 
-## Scripts
-
-| Script              | Description                                                   |
-| ------------------- | ------------------------------------------------------------- |
-| `npm run dev`       | Start the Vite dev server                                     |
-| `npm run build`     | Type-check the app and the API function, then build with Vite |
-| `npm run preview`   | Serve the production build locally                            |
-| `npm run typecheck` | Type-check the app and the API function only                  |
+The function returns `{ image, latencyMs, model, provider }` on success and a structured error (`error`, `status`, `detail`) on failure. Images over 3 MB are rejected to stay under Vercel's response size limit.
 
 ## Export format
 
@@ -57,51 +55,39 @@ Open the URL Vite prints (default http://localhost:5173). `npm run dev` serves t
 }
 ```
 
-`rating` is `"up"`, `"down"` or `null` (unrated). Imported cards also carry `source: "local-import"`, `fileName`, `steps`, `settingsNote` and `metadataReadFrom`.
+`rating` is `"up"`, `"down"` or `null`. Imported cards also carry `source`, `fileName`, `steps`, `settingsNote` and `metadataReadFrom`.
 
-## Project structure
+## Run locally
 
-```
-rating-gallery/
-├── api/generate.ts           # Vercel function: Hugging Face first, Pollinations.ai fallback
-├── docs/screenshot.png
-├── public/
-│   ├── favicon.svg
-│   └── samples/              # six pre-generated fallback images
-├── src/
-│   ├── components/
-│   │   ├── Card.tsx          # preview, rating, debounced note, imported-card metadata editor
-│   │   ├── DemoBar.tsx       # shared header linking back to the portfolio Lab
-│   │   ├── GeneratePanel.tsx # prompt form and fallback chain
-│   │   ├── ImportPanel.tsx   # local file import (drag and drop or file picker)
-│   │   ├── Preview.tsx       # seeded inline-SVG "model output" generator
-│   │   ├── SummaryBar.tsx
-│   │   ├── ThemeToggle.tsx
-│   │   └── Toolbar.tsx       # filter and sort controls
-│   ├── data/samples.ts       # sample prompts, models, seeds, palettes
-│   ├── hooks/useEntries.ts   # ratings and notes state with localStorage sync
-│   ├── lib/
-│   │   ├── exportRatings.ts  # JSON build, download, clipboard
-│   │   ├── gallery.ts        # filter, sort, summary (pure functions)
-│   │   ├── generated.ts      # /api/generate client, browser fallback, sample fallback
-│   │   ├── imported.ts       # import, downscale and persistence of local images
-│   │   ├── pngMeta.ts        # PNG text chunk parser (XMP and parameters)
-│   │   ├── prng.ts           # deterministic PRNG for previews
-│   │   ├── samples.json      # fallback sample prompts and files
-│   │   └── storage.ts        # validated localStorage access
-│   ├── App.tsx
-│   ├── main.tsx
-│   ├── theme.ts
-│   ├── styles.css, light.css, demo-shell.css
-│   └── types.ts
-├── .env.example
-├── index.html
-├── package.json
-├── tsconfig.json, tsconfig.api.json
-├── vercel.json
-└── vite.config.ts
+Requires Node.js 20.19 or newer.
+
+```bash
+npm install
+cp .env.example .env    # optional, only for the Hugging Face path
+npm run dev             # front end only, http://localhost:5173
+vercel dev              # front end plus /api/generate
 ```
 
-## Deploy notes
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `HF_TOKEN` | No | Server-side Hugging Face token. Never prefix with `VITE_`. |
+| `HF_IMAGE_MODEL` | No | Hugging Face model id. Code default: `stabilityai/stable-diffusion-3-medium-diffusers`. |
 
-Deploy to Vercel with the Vite defaults (framework preset Vite, build command `npm run build`, output directory `dist`). `api/generate.ts` deploys as a serverless function with a 60-second limit (`vercel.json`). Set `HF_TOKEN` under Project Settings > Environment Variables if you want the Hugging Face path. Ratings, notes, generated and imported cards are stored in each visitor's own browser, so nothing is shared between visitors.
+## Evaluation
+
+This repo is itself an evaluation surface: the exported JSON is the result. There is no automated test suite yet. `npm run build` type-checks both the app and the API function before building.
+
+## Honest limitations
+
+- A personal portfolio prototype. It has no user accounts and no real users beyond whoever opens the demo.
+- Ratings live in one browser's `localStorage`. Nothing is shared between reviewers, so there is no inter-rater agreement or aggregation.
+- Binary verdicts only, no rubric or multi-criteria scoring.
+- `/api/generate` has no rate limiting, authentication or monitoring. Free Hugging Face accounts may have no inference credits, in which case the function falls through to Pollinations.ai.
+- The sample cards are synthetic SVG art, not real model outputs.
+- No automated tests.
+
+## Stack
+
+React 18, TypeScript 5, Vite 7, plain CSS with variables, one Vercel serverless function (60 s max duration in `vercel.json`), browser `localStorage`.
+
+Part of the Lab at https://www.abhidattasrichandan.com
